@@ -9,10 +9,14 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_pgsql pgsql gd zip
 
 WORKDIR /app
-COPY . .
 
-# Install dependencies and build
-RUN npm install && npm run build
+# SPEED FIX: Copy package files first to CACHE THE INSTALL
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copy the rest of the code ONLY after install is cached
+COPY . .
+RUN npm run build
 
 # --- Stage 2: Serve with Nginx ---
 FROM nginx:alpine
@@ -20,9 +24,9 @@ FROM nginx:alpine
 # Copy the custom Nginx configuration
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
-# Copy build assets into Nginx
-WORKDIR /var/www/html
-COPY --from=node-stage /app/public /var/www/html/public
+# Copy build assets into Nginx (MATCHING THE PHP WORKDIR AT /var/www)
+WORKDIR /var/www
+COPY --from=node-stage /app/public /var/www/public
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
