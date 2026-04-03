@@ -28,7 +28,6 @@ COPY composer.json composer.lock* ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 
 COPY . .
-# Add ignore-platform-reqs to dump-autoload as well
 RUN composer dump-autoload --optimize --ignore-platform-reqs
 
 # Stage 3: Node.js Build
@@ -38,7 +37,9 @@ WORKDIR /var/www
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY --from=php-stage /var/www /var/www
-RUN npm run build
+
+# MEMORY FIX: Set max-old-space-size for production build
+RUN NODE_OPTIONS=--max-old-space-size=1024 npm run build
 
 # Stage 4: Final Image
 FROM base

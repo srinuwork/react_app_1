@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # We name this so the 'web' container can find its files
+    image: react_app_1-app:latest
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
