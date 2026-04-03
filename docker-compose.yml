@@ -3,30 +3,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: unless-stopped
-    volumes:
-      - webapp-code:/var/www/html
-    env_file:
-      - .env
+    # No shared volume here for source code anymore to prevent stale cache
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
     networks:
-      - app-network
+      - web-network
 
   web:
     build:
-      context: ./docker/nginx
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    volumes:
-      - webapp-code:/var/www/html:ro
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     depends_on:
       - app
+    # No shared volume here for source code anymore
     networks:
-      - app-network
-
-volumes:
-  webapp-code:
-
+      - web-network
 
 networks:
-  app-network:
+  web-network:
     driver: bridge
