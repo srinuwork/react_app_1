@@ -17,8 +17,8 @@ RUN npm install
 # Copy the rest of the code ONLY after install is cached
 COPY . .
 
-# MEMORY FIX: Set max-old-space-size to prevent crash on smaller servers
-RUN NODE_OPTIONS=--max-old-space-size=1024 npm run build
+# DEBUG MODE: I added '--debug' so we can see EXACTLY why it is failing!
+RUN NODE_OPTIONS=--max-old-space-size=1024 npm run build -- --debug
 
 # --- Stage 2: Serve with Nginx ---
 FROM nginx:alpine
