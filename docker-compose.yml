@@ -16,8 +16,6 @@ services:
       context: ./docker/nginx
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "80:80"
     volumes:
       - webapp-code:/var/www:ro
     depends_on:
