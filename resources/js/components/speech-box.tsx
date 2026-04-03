@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 
 export default function SpeechBox() {
     const [text, setText] = useState('Welcome to your new AI Speech Editor! Type anything here in English or Telugu to hear it speak perfectly.');
@@ -38,10 +38,12 @@ export default function SpeechBox() {
         return () => {
             window.speechSynthesis.cancel();
         };
-    }, []);
+    }, [selectedVoice]);
 
     const handleSpeak = () => {
-        if (text.trim() === '') return;
+        if (text.trim() === '') {
+return;
+}
 
         // Cancel any current speech
         window.speechSynthesis.cancel();
@@ -50,6 +52,7 @@ export default function SpeechBox() {
         
         // Find and set the selected voice
         const voice = voices.find(v => v.name === selectedVoice);
+
         if (voice) {
             utterance.voice = voice;
             utterance.lang = voice.lang; // CRITICAL: Tells the voice to use its native language engine
@@ -71,7 +74,10 @@ export default function SpeechBox() {
     };
 
     const handleDownload = async () => {
-        if (text.trim() === '') return;
+        if (text.trim() === '') {
+return;
+}
+
         setIsGenerating(true);
 
         // Detect language based on the selected voice
