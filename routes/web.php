@@ -3,11 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::middleware('guest')->group(function () {
+    Route::inertia('/', 'welcome', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ])->name('home');
+});
 
-Route::post('/synthesize', [\App\Http\Controllers\SpeechController::class, 'synthesize'])->name('synthesize');
+Route::post('/synthesize', [\App\Http\Controllers\SpeechController::class, 'synthesize'])->name('synthesize')->middleware('guest');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
