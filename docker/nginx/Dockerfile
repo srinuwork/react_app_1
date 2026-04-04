@@ -1,12 +1,15 @@
 # --- Stage 1: Build Frontend Assets (Needs PHP for Wayfinder Plugin) ---
 FROM php:8.4-fpm-alpine AS node-stage
 
-# Install Node.js and system dependencies for PHP extensions
-RUN apk add --no-cache nodejs npm libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev postgresql-dev oniguruma-dev
+# Install high-speed PHP extension installer
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-# Install required PHP extensions so the Vite plugin can run artisan commands
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_pgsql pgsql gd zip
+# Use basic compatibility libraries and Node/NPM
+RUN chmod +x /usr/local/bin/install-php-extensions && \
+    apk add --no-cache nodejs npm postgresql-dev libc6-compat gcompat libstdc++
+
+# Install ONLY the database driver needed for Wayfinder (much faster with this tool)
+RUN install-php-extensions pdo_pgsql pgsql
 
 WORKDIR /app
 
@@ -17,8 +20,8 @@ RUN npm install
 # Copy the rest of the code ONLY after install is cached
 COPY . .
 
-# DEBUG MODE: I added '--debug' so we can see EXACTLY why it is failing!
-RUN NODE_OPTIONS=--max-old-space-size=1024 npm run build -- --debug
+# Build with increased memory and production environment
+RUN NODE_OPTIONS=--max-old-space-size=2048 NODE_ENV=production npm run build
 
 # --- Stage 2: Serve with Nginx ---
 FROM nginx:alpine

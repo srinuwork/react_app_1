@@ -1,24 +1,15 @@
 # Stage 1: Base PHP 8.4 image
 FROM php:8.4-fpm-alpine AS base
 
-# Install system dependencies
-RUN apk add --no-cache \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    libzip-dev \
-    postgresql-dev \
-    oniguruma-dev
+# Install high-speed PHP extension installer
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-# Install extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-    pdo_pgsql \
-    pgsql \
-    bcmath \
-    gd \
-    zip \
-    opcache
+# Install ONLY what is absolutely needed manually (native compat layers)
+RUN chmod +x /usr/local/bin/install-php-extensions && \
+    apk add --no-cache libc6-compat gcompat libstdc++ nodejs npm
+
+# Install extensions (MUCH FASTER with this script)
+RUN install-php-extensions pdo_pgsql pgsql gd zip bcmath opcache
 
 # Stage 2: PHP Dependencies
 FROM base AS php-stage
@@ -32,14 +23,13 @@ RUN composer dump-autoload --optimize --ignore-platform-reqs
 
 # Stage 3: Node.js Build
 FROM base AS node-stage
-RUN apk add --no-cache nodejs npm
 WORKDIR /var/www
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY --from=php-stage /var/www /var/www
 
-# MEMORY FIX: Set max-old-space-size for production build
-RUN NODE_OPTIONS=--max-old-space-size=1024 npm run build
+# Build with optimized memory
+RUN NODE_OPTIONS=--max-old-space-size=2048 NODE_ENV=production npm run build
 
 # Stage 4: Final Image
 FROM base
